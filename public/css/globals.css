@@ -225,10 +225,11 @@ main.container {
   justify-content: space-between; /* Đẩy nút footer xuống đáy */
   width: 240px;
   background-color: #eaf2fb;
-  border-right: 1px solid #c9d4e0;
   padding: 16px;
   font-family: "Segoe UI", sans-serif;
-  color: #1e3a8a; /* ✅ luôn kéo dài theo chiều cao màn hình */
+  color: #1e3a8a;
+  height: auto;               /* ✅ Thêm dòng này */
+ /* ✅ luôn kéo dài theo chiều cao màn hình */
 }
 
 /* ===== Navigation ===== */
@@ -264,19 +265,21 @@ main.container {
   background: #eaf2fb;
   margin-top: auto;
   
+  
 }
-
 .sidebar-footer button {
-  background-color: #3b82f6;
+  background-color: #091f43;
   color: #fff;
   border: none;
-  padding: 9px 16px;
+  padding: 14px 16px;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  width: 80%;
+  width: 85%;
+  margin-right: 60px;  /* 🔹 Căn lệch trái nhẹ */
   transition: background 0.2s, transform 0.2s;
 }
+
 
 .sidebar-footer button:hover {
   background-color: #2563eb;
