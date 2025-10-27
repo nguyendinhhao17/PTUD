@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="/css/DuyetYeuCauSuaDiem.css">
+
 <section class="approve-section">
   <h2><%= title %></h2>
   <p>Xem xét và phê duyệt các yêu cầu sửa điểm từ giáo viên</p>
@@ -6,12 +8,14 @@
     <thead>
       <tr>
         <th>#</th>
-        <th>Học sinh</th>
+        <th>Mã HS</th>
+        <th>Tên HS</th>
         <th>Môn</th>
         <th>Loại điểm</th>
         <th>Điểm cũ</th>
         <th>Điểm mới</th>
         <th>Lý do</th>
+        <th>Giáo viên gửi</th>
         <th>Trạng thái</th>
         <th>Thao tác</th>
       </tr>
@@ -21,17 +25,26 @@
         <% requests.forEach((r, i) => { %>
           <tr>
             <td><%= i + 1 %></td>
-            <td><%= r.HoTen %></td>
+            <td><%= r.MaHocSinh %></td>
+            <td><%= r.TenHocSinh %></td>
             <td><%= r.TenMonHoc %></td>
             <td><%= r.LoaiDiem %></td>
             <td class="text-red"><%= r.DiemCu %></td>
             <td class="text-green"><%= r.DiemMoi %></td>
             <td><%= r.LyDo %></td>
+            <td><%= r.TenGiaoVien %></td>
             <td><%= r.TrangThai %></td>
             <td>
-              <% if (r.TrangThai === 'Chờ duyệt') { %>
-                <button class="approve-btn" data-id="<%= r.MaYeuCau %>">✅ Duyệt</button>
-                <button class="reject-btn" data-id="<%= r.MaYeuCau %>">❌ Từ chối</button>
+              <% if (r.TrangThai === 'Đang xử lý') { %>
+                <div class="action-container">
+                  <div class="top-btn">
+                    <button class="view-btn" data-id="<%= r.MaYeuCau %>">Xem chi tiết</button>
+                  </div>
+                  <div class="bottom-btns">
+                    <button class="approve-btn" data-id="<%= r.MaYeuCau %>">✅ Duyệt</button>
+                    <button class="reject-btn" data-id="<%= r.MaYeuCau %>">❌ Từ chối</button>
+                  </div>
+                </div>
               <% } else { %>
                 <em>Đã xử lý</em>
               <% } %>
@@ -39,10 +52,19 @@
           </tr>
         <% }) %>
       <% } else { %>
-        <tr><td colspan="9" style="text-align:center;">Không có yêu cầu cần duyệt</td></tr>
+        <tr><td colspan="11" style="text-align:center;">Không có yêu cầu cần duyệt</td></tr>
       <% } %>
     </tbody>
   </table>
+
+  <!-- Modal chi tiết -->
+  <div id="detail-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Chi tiết yêu cầu</h3>
+      <div id="detail-content"></div>
+    </div>
+  </div>
 </section>
 
-<script src="/js/duyetyeucau.js"></script>
+<script src="/js/DuyetYeuCauSuaDiem.js"></script>

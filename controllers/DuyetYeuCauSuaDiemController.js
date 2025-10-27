@@ -1,48 +1,56 @@
-// controllers/DuyetYeuCauSuaDiemController.js
 const DuyetYeuCauSuaDiemModel = require('../models/DuyetYeuCauSuaDiemModel');
 
 class DuyetYeuCauSuaDiemController {
-  // Render giao diện
-  static renderPage(req, res) {
-  res.render('pages/duyetyeucausuadiem', {
-    title: 'Duyệt yêu cầu sửa điểm',
-    requests: [] // ✅ thêm dòng này để tránh lỗi undefined
-  });
-}
-
-  // Lấy danh sách lớp theo khối
-  static async getLopTheoKhoi(req, res) {
+  static async renderPage(req, res) {
     try {
-      const { khoi } = req.body;
-      const data = await DuyetYeuCauSuaDiemModel.getLopTheoKhoi(khoi);
-      res.json({ success: true, data });
-    } catch (error) {
-      console.error('Lỗi getLopTheoKhoi:', error);
+      const requests = await DuyetYeuCauSuaDiemModel.getPendingRequests();
+      res.render('pages/duyetyeucausuadiem', {
+        title: 'Duyệt yêu cầu sửa điểm',
+        requests
+      });
+    } catch(err) {
+      console.error(err);
+      res.status(500).send('Lỗi server');
+    }
+  }
+
+  static async getRequestDetails(req, res) {
+    try {
+      const { id } = req.params;
+      const request = await DuyetYeuCauSuaDiemModel.getRequestDetails(id);
+      if (!request) return res.json({ success: false, message: 'Không tìm thấy yêu cầu' });
+      res.json({ success: true, request });
+    } catch(err) {
+      console.error(err);
       res.status(500).json({ success: false, message: 'Lỗi server' });
     }
   }
 
-  // Lấy danh sách yêu cầu
-  static async getRequests(req, res) {
+  static async approveRequest(req, res) {
     try {
-      const { khoi, lop, mon } = req.body;
-      const data = await DuyetYeuCauSuaDiemModel.getRequests(khoi, lop, mon);
-      res.json({ success: true, data });
-    } catch (error) {
-      console.error('Lỗi getRequests:', error);
-      res.status(500).json({ success: false, message: 'Lỗi server' });
+      const { id } = req.body;
+      const maHieuTruong = req.session.maHieuTruong;
+      if (!maHieuTruong) return res.status(401).json({ success:false, message:'Chưa đăng nhập' });
+
+      const success = await DuyetYeuCauSuaDiemModel.approveRequest(id, maHieuTruong);
+      res.json({ success, message: success ? 'Duyệt thành công' : 'Duyệt thất bại' });
+    } catch(err) {
+      console.error(err);
+      res.status(500).json({ success:false, message:'Lỗi server' });
     }
   }
 
-  // Cập nhật trạng thái duyệt
-  static async updateStatus(req, res) {
+  static async rejectRequest(req, res) {
     try {
-      const { id, status } = req.body;
-      const result = await DuyetYeuCauSuaDiemModel.updateStatus(id, status);
-      res.json({ success: result });
-    } catch (error) {
-      console.error('Lỗi updateStatus:', error);
-      res.status(500).json({ success: false, message: 'Lỗi server' });
+      const { id } = req.body;
+      const maHieuTruong = req.session.maHieuTruong;
+      if (!maHieuTruong) return res.status(401).json({ success:false, message:'Chưa đăng nhập' });
+
+      const success = await DuyetYeuCauSuaDiemModel.rejectRequest(id, maHieuTruong);
+      res.json({ success, message: success ? 'Từ chối thành công' : 'Thao tác thất bại' });
+    } catch(err) {
+      console.error(err);
+      res.status(500).json({ success:false, message:'Lỗi server' });
     }
   }
 }
