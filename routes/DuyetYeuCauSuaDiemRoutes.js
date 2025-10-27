@@ -1,13 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const DuyetYeuCauSuaDiemController = require('../controllers/DuyetYeuCauSuaDiemController');
+const DuyetController = require('../controllers/DuyetYeuCauSuaDiemController');
 
-// Giao diện
-router.get('/render', DuyetYeuCauSuaDiemController.renderPage);
-
-// API chi tiết và xử lý
-router.get('/details/:id', DuyetYeuCauSuaDiemController.getRequestDetails);
-router.post('/approve', DuyetYeuCauSuaDiemController.approveRequest);
-router.post('/reject', DuyetYeuCauSuaDiemController.rejectRequest);
+router.get('/render', DuyetController.renderPage);
+router.get('/details/:id', DuyetController.getRequestDetails);
+router.post('/approve', DuyetController.approveRequest);
+router.post('/reject', DuyetController.rejectRequest);
 
 module.exports = router;

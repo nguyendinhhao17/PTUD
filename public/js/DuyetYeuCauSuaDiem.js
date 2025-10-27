@@ -1,74 +1,47 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const approveBtns = document.querySelectorAll('.approve-btn');
-  const rejectBtns = document.querySelectorAll('.reject-btn');
-  const viewBtns = document.querySelectorAll('.view-btn');
-  const modal = document.getElementById('detail-modal');
-  const modalContent = document.getElementById('detail-content');
-  const closeModal = modal.querySelector('.close');
+// Chắc chắn DOM đã render xong
+const modal = document.getElementById('detail-modal');
+const modalContent = document.getElementById('detail-content');
+const closeModal = modal.querySelector('.close');
+const table = document.getElementById('requests-table');
 
-  // Duyệt yêu cầu
-  approveBtns.forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.dataset.id;
-      if(confirm('Xác nhận duyệt yêu cầu này?')) await updateRequestStatus(id, 'approve');
-    });
-  });
+console.log('JS loaded', modal, table); // debug
 
-  // Từ chối yêu cầu
-  rejectBtns.forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.dataset.id;
-      if(confirm('Bạn chắc chắn muốn từ chối yêu cầu này?')) await updateRequestStatus(id, 'reject');
-    });
-  });
+if(modal && table){
+  table.addEventListener('click', async e => {
+    const tr = e.target.closest('tr');
+    if(!tr) return;
+    const id = tr.dataset.id;
 
-  // Xem chi tiết
-  viewBtns.forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.dataset.id;
+    // Hiển thị modal
+    if(e.target.classList.contains('view-btn')){
+      modalContent.innerHTML = `<p>Loading chi tiết yêu cầu: ${id}</p>`; // tạm
+      modal.style.display = 'block';
+
+      // Sau này có thể fetch API
+      /*
       try {
-        const res = await fetch(`/duyetyeucau/details/${id}`);
+        const res = await fetch(`/api/duyetyeucausuadiem/details/${id}`);
         const data = await res.json();
-        if(data.success) {
+        if(data.success){
           const yc = data.request;
           modalContent.innerHTML = `
-            <p><strong>Học sinh:</strong> ${yc.TenHocSinh} (${yc.MaHocSinh}, ${yc.GioiTinhHS}, Khóa: ${yc.KhoaHoc})</p>
-            <p><strong>Môn học:</strong> ${yc.TenMonHoc}</p>
-            <p><strong>Loại điểm:</strong> ${yc.LoaiDiem}</p>
-            <p><strong>Điểm cũ:</strong> ${yc.DiemCu}</p>
-            <p><strong>Điểm mới:</strong> ${yc.DiemMoi}</p>
-            <p><strong>Lý do:</strong> ${yc.LyDo}</p>
-            <p><strong>Giáo viên gửi:</strong> ${yc.TenGiaoVien} (Email: ${yc.EmailGV}, SDT: ${yc.SDTGV})</p>
+            <p><strong>Học sinh:</strong> ${yc.TenHocSinh} (${yc.MaHocSinh})</p>
+            ...
           `;
-          modal.style.display = 'block';
-        } else alert('Không lấy được chi tiết');
-      } catch(err) {
-        console.error(err);
-        alert('Lỗi khi lấy chi tiết');
-      }
-    });
+        }
+      } catch(err){ console.error(err); }
+      */
+    }
+
+    if(e.target.classList.contains('approve-btn')){
+      if(confirm('Bạn có chắc muốn duyệt?')) console.log('Duyệt', id);
+    }
+
+    if(e.target.classList.contains('reject-btn')){
+      if(confirm('Bạn có chắc muốn từ chối?')) console.log('Từ chối', id);
+    }
   });
 
   closeModal.onclick = () => modal.style.display = 'none';
-  window.onclick = e => { if(e.target === modal) modal.style.display = 'none'; };
-});
-
-// Hàm update trạng thái
-async function updateRequestStatus(id, action) {
-  const url = action === 'approve' ? '/duyetyeucau/approve' : '/duyetyeucau/reject';
-  try {
-    const res = await fetch(url, {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ id })
-    });
-    const data = await res.json();
-    if(data.success) {
-      alert(data.message);
-      location.reload();
-    } else alert('Thao tác thất bại: ' + data.message);
-  } catch(err) {
-    console.error(err);
-    alert('Lỗi server khi cập nhật trạng thái');
-  }
+  window.onclick = e => { if(e.target === modal) modal.style.display='none'; };
 }
