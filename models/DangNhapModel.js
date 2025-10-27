@@ -4,9 +4,23 @@ class TaiKhoan {
   // 🔹 Hàm đăng nhập
   static async login(username, password) {
     try {
+      // Lấy thông tin tài khoản
       const [rows] = await db.execute(
-        'SELECT * FROM TaiKhoan WHERE TenTaiKhoan = ? AND MatKhau = ?',
-        [username, password]
+        `SELECT 
+          TenTaiKhoan,
+          LoaiTaiKhoan,
+          CASE 
+            WHEN LoaiTaiKhoan = 'HieuTruong' THEN 
+              (SELECT MaHieuTruong FROM HieuTruong WHERE TenTaiKhoan = ?)
+            WHEN LoaiTaiKhoan = 'GiaoVien' THEN 
+              (SELECT MaGiaoVien FROM GiaoVien WHERE TenTaiKhoan = ?)
+            WHEN LoaiTaiKhoan = 'HocSinh' THEN 
+              (SELECT MaHocSinh FROM HocSinh WHERE TenTaiKhoan = ?)
+            ELSE NULL
+          END as UserId
+        FROM TaiKhoan 
+        WHERE TenTaiKhoan = ? AND MatKhau = ?`,
+        [username, username, username, username, password]
       );
 
       // Nếu không tìm thấy tài khoản

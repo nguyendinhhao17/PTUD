@@ -1,74 +1,244 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const modal = document.getElementById('detail-modal');
-  const modalContent = document.getElementById('detail-content');
-  const closeModal = modal.querySelector('.close');
-  const table = document.getElementById('requests-table');
+// Chắc chắn DOM đã render xong
+const modal = document.getElementById('detail-modal');
+const modalContent = document.getElementById('detail-content');
+const table = document.getElementById('requests-table');
 
+// Tạo modal xác nhận
+const confirmationModal = document.createElement('div');
+confirmationModal.className = 'modal confirmation-modal';
+confirmationModal.innerHTML = `
+  <div class="modal-content">
+    <h3 id="confirm-title"></h3>
+    <p id="confirm-message"></p>
+    <div class="modal-actions">
+      <button id="confirm-yes" class="btn">Đồng ý</button>
+      <button id="confirm-no" class="btn">Hủy</button>
+    </div>
+  </div>
+`;
+document.body.appendChild(confirmationModal);
+
+console.log('JS loaded', modal, table); // debug
+
+// Helper: render a simple alert area inside the modal
+function renderAlert(message, type = 'info'){
+  return `<div class="modal-alert modal-alert-${type}">${message}</div>`;
+}
+
+// Helper: update a table row's status and action cells
+function updateRowStatus(tr, status){
+  if(!tr) return;
+  
+  // 1. Find and update status cell (index 10 in our table)
+  const cells = tr.querySelectorAll('td');
+  const statusCell = cells[10]; // Trạng thái là cột thứ 11 (index 10)
+  if(statusCell) {
+    statusCell.textContent = status;
+    statusCell.dataset.status = status;
+  }
+
+  // 2. Update action buttons cell (last cell)
+  const actionCell = cells[cells.length - 1];
+  if(actionCell) {
+    // Xóa các nút cũ và thay bằng "Đã xử lý"
+    actionCell.innerHTML = '<em>Đã xử lý</em>';
+  }
+  
+  // 3. Optional: Add visual feedback
+  tr.classList.add('updated');
+  setTimeout(() => tr.classList.remove('updated'), 2000);
+}
+
+async function fetchRequestDetails(id){
+  modalContent.innerHTML = renderAlert('Đang tải chi tiết...', 'info');
+  try{
+    const res = await fetch(`/api/duyetyeucausuadiem/details/${id}`, {cache: 'no-store'});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if(!data || !data.success) throw new Error(data?.message || 'Lỗi khi lấy dữ liệu');
+
+    const yc = data.request;
+    // render detail view (adjust fields according to API)
+      modalContent.innerHTML = `
+        <p><strong>Giáo viên:</strong> ${yc.TenGiaoVien || yc.GiaoVien || '—'}</p>
+        <p><strong>Học sinh:</strong> ${yc.TenHocSinh || '—'} (${yc.MaHocSinh || '—'})</p>
+        <p><strong>Lớp:</strong> ${yc.TenLop || '—'}</p>
+        <p><strong>Môn:</strong> ${yc.TenMonHoc || yc.Mon || '—'}</p>
+        <p><strong>Năm học:</strong> ${yc.NamHoc || '—'}</p>
+        <p><strong>Học kỳ:</strong> ${yc.HocKi || '—'}</p>
+        <p><strong>Điểm cũ:</strong> ${yc.DiemCu ?? '—'}</p>
+        <p><strong>Điểm đề xuất:</strong> ${yc.DiemMoi ?? '—'}</p>
+        <p><strong>Lý do:</strong> ${yc.LyDo || '—'}</p>
+        ${yc.MinhChung ? `
+        <p>
+          <strong>Minh chứng:</strong>
+          <button class="view-proof btn" data-image="${yc.MinhChung}">
+            Xem minh chứng
+          </button>
+        </p>
+        ` : ''}
+        <div class="modal-actions">
+          <button class="modal-approve btn" data-id="${id}">Duyệt</button>
+          <button class="modal-reject btn" data-id="${id}">Từ chối</button>
+          <button class="modal-close btn">Đóng</button>
+        </div>
+
+        <!-- Image Modal -->
+        <div id="proof-modal" class="modal" style="display: none;">
+          <div class="modal-content">
+            <span class="close">&times;</span>
+            <img id="proof-image" src="" alt="Minh chứng" style="width: 100%; max-height: 80vh; object-fit: contain;">
+          </div>
+        </div>
+      `;
+
+
+    // attach modal internal handlers
+    const approveBtn = modalContent.querySelector('.modal-approve');
+    const rejectBtn = modalContent.querySelector('.modal-reject');
+    const closeBtn = modalContent.querySelector('.modal-close');
+    const viewProofBtn = modalContent.querySelector('.view-proof');
+    const proofModal = modalContent.querySelector('#proof-modal');
+    const proofImage = modalContent.querySelector('#proof-image');
+    const proofClose = proofModal?.querySelector('.close');
+
+    // Xử lý nút xem minh chứng
+    if (viewProofBtn && proofModal && proofImage) {
+      viewProofBtn.addEventListener('click', () => {
+        const imageName = viewProofBtn.dataset.image;
+        proofImage.src = `/minhchung/${imageName}`;
+        proofModal.style.display = 'block';
+
+        // Đóng modal minh chứng
+        proofClose.onclick = () => proofModal.style.display = 'none';
+        window.onclick = e => {
+          if (e.target === proofModal) {
+            proofModal.style.display = 'none';
+          }
+        };
+
+        // Xử lý lỗi load ảnh
+        proofImage.onerror = () => {
+          proofImage.src = ''; // clear failed image
+          proofModal.innerHTML = renderAlert('Không thể tải ảnh minh chứng', 'danger');
+        };
+      });
+    }
+
+    approveBtn && approveBtn.addEventListener('click', async () => {
+      if(!confirm('Bạn có chắc muốn duyệt yêu cầu này?')) return;
+      await doApproveReject(id, 'approve', true);
+    });
+
+    rejectBtn && rejectBtn.addEventListener('click', async () => {
+      if(!confirm('Bạn có chắc muốn từ chối yêu cầu này?')) return;
+      await doApproveReject(id, 'reject', true);
+    });
+
+    closeBtn && closeBtn.addEventListener('click', () => { 
+      if(modal) modal.style.display='none';
+    });
+
+  }catch(err){
+    console.error(err);
+    modalContent.innerHTML = renderAlert('Không thể tải chi tiết: ' + (err.message || err), 'danger');
+  }
+}
+
+async function doApproveReject(id, action, isFromModal = false){
+  // action = 'approve' or 'reject'
+  const endpoint = `/api/duyetyeucausuadiem/${action}`;
+  
+  // Find table row and disable all its buttons
+  const tr = document.querySelector(`tr[data-id="${id}"]`);
+  const allButtons = [
+    ...Array.from(tr?.querySelectorAll('button') || []),
+    ...Array.from(modalContent?.querySelectorAll('button') || [])
+  ];
+  
+  // Disable all related buttons during processing
+  allButtons.forEach(b => b.disabled = true);
+  
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ id })
+    });
+    
+    if(!res.ok) {
+      throw new Error(res.status === 401 ? 'Vui lòng đăng nhập lại' : `Lỗi ${res.status}`);
+    }
+    
+    const data = await res.json();
+    if(!data.success) {
+      throw new Error(data.message || 'Thao tác thất bại');
+    }
+
+    // Update table row with new status
+    const newStatus = action === 'approve' ? 'Đã duyệt' : 'Đã từ chối';
+    updateRowStatus(tr, newStatus);
+
+    // Show success message
+    const successMsg = data.message || `Đã ${action === 'approve' ? 'duyệt' : 'từ chối'} yêu cầu thành công`;
+    
+    if(isFromModal) {
+      // If action was from modal, show success in modal then close it
+      modalContent.innerHTML = renderAlert(successMsg, 'success');
+      setTimeout(() => { if(modal) modal.style.display = 'none'; }, 800);
+    } else {
+      // If action was from table buttons, show floating alert
+      const alert = document.createElement('div');
+      alert.className = 'floating-alert success';
+      alert.textContent = successMsg;
+      document.body.appendChild(alert);
+      setTimeout(() => alert.remove(), 3000);
+    }
+    
+  } catch(err) {
+    console.error('Lỗi khi xử lý yêu cầu:', err);
+    const errorMsg = err.message || 'Đã xảy ra lỗi khi xử lý';
+    
+    if(isFromModal) {
+      modalContent.insertAdjacentHTML('afterbegin', renderAlert(errorMsg, 'danger'));
+    } else {
+      const alert = document.createElement('div');
+      alert.className = 'floating-alert error';
+      alert.textContent = errorMsg;
+      document.body.appendChild(alert);
+      setTimeout(() => alert.remove(), 3000);
+    }
+    
+    // Re-enable buttons on error so user can retry
+    allButtons.forEach(b => b.disabled = false);
+  }
+}
+
+if(modal && table){
   table.addEventListener('click', async e => {
     const tr = e.target.closest('tr');
     if(!tr) return;
     const id = tr.dataset.id;
 
-    // Xem chi tiết
+    // Hiển thị modal khi nhấn view
     if(e.target.classList.contains('view-btn')){
-      try {
-        const res = await fetch(`/api/duyetyeucausuadiem/details/${id}`);
-        const data = await res.json();
-        if(data.success){
-          const yc = data.request;
-          let minhChungHtml = '';
-          if(yc.MinhChung.length){
-            yc.MinhChung.forEach(img => {
-              minhChungHtml += `<img src="/minhchung/${img}" style="max-width:100%;margin-top:5px;">`;
-            });
-          }
-          modalContent.innerHTML = `
-            <p><strong>Học sinh:</strong> ${yc.TenHocSinh} (${yc.MaHocSinh}, ${yc.GioiTinhHS}, Khóa: ${yc.KhoaHoc})</p>
-            <p><strong>Môn học:</strong> ${yc.TenMonHoc}</p>
-            <p><strong>Loại điểm:</strong> ${yc.LoaiDiem}</p>
-            <p><strong>Điểm cũ:</strong> ${yc.DiemCu}</p>
-            <p><strong>Điểm mới:</strong> ${yc.DiemMoi}</p>
-            <p><strong>Lý do:</strong> ${yc.LyDo}</p>
-            <p><strong>GV gửi:</strong> ${yc.TenGiaoVien} (Email: ${yc.EmailGV}, SDT: ${yc.SDTGV})</p>
-            ${minhChungHtml}
-          `;
-          modal.style.display = 'block';
-        } else alert(data.message);
-      } catch(err){ console.error(err); alert('Lỗi server'); }
+      if(modal) modal.style.display = 'block';
+      await fetchRequestDetails(id);
     }
 
-    // Duyệt
+    // approve/reject buttons that may live in the row (delegated)
     if(e.target.classList.contains('approve-btn')){
-      if(!confirm('Bạn có chắc muốn duyệt?')) return;
-      try {
-        const res = await fetch('/api/duyetyeucausuadiem/approve',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({id})
-        });
-        const data = await res.json();
-        alert(data.message);
-        if(data.success) location.reload();
-      } catch(err){ console.error(err); alert('Lỗi server'); }
+      if(!confirm('Bạn có chắc muốn duyệt yêu cầu này?')) return;
+      await doApproveReject(id, 'approve', false);
     }
 
-    // Từ chối
     if(e.target.classList.contains('reject-btn')){
-      if(!confirm('Bạn có chắc muốn từ chối?')) return;
-      try {
-        const res = await fetch('/api/duyetyeucausuadiem/reject',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({id})
-        });
-        const data = await res.json();
-        alert(data.message);
-        if(data.success) location.reload();
-      } catch(err){ console.error(err); alert('Lỗi server'); }
+      if(!confirm('Bạn có chắc muốn từ chối yêu cầu này?')) return;
+      await doApproveReject(id, 'reject', false);
     }
   });
 
-  // Đóng modal
-  closeModal.onclick = () => modal.style.display = 'none';
-  window.onclick = e => { if(e.target === modal) modal.style.display = 'none'; };
-});
+  const closeModal = modal.querySelector('.close');
+  if(closeModal) closeModal.onclick = () => modal.style.display = 'none';
+  window.onclick = e => { if(e.target === modal) modal.style.display='none'; };
+}

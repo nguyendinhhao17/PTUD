@@ -19,9 +19,30 @@ class DangNhapController {
         return res.json({ success: false, message: "Sai tài khoản hoặc mật khẩu" });
       }
 
+      // Map vai trò và lưu session
+      let role;
+      if (user.LoaiTaiKhoan === 'HieuTruong') {
+        role = 'Hiệu trưởng';
+      } else if (user.LoaiTaiKhoan === 'GiaoVien') {
+        role = 'Giáo viên';
+      } else if (user.LoaiTaiKhoan === 'HocSinh') {
+        role = 'Học sinh';
+      } else if (user.LoaiTaiKhoan === 'GiaoVu') {
+        role = 'Giáo vụ';
+      } else if (user.LoaiTaiKhoan === 'PhuHuynh') {
+        role = 'Phụ huynh';
+      } else if (user.LoaiTaiKhoan === 'QuanTriVien') {
+        role = 'Quản trị hệ thống';
+      } else {
+        role = user.LoaiTaiKhoan;
+      }
+
+      // Lưu session với đầy đủ thông tin cần thiết
       req.session.user = {
-        username: user.TenTaiKhoan,
-        role: user.VaiTro || user.LoaiTaiKhoan
+        username: user.TenTaiKhoan, // TenTaiKhoan chính là mã người dùng
+        role: role,
+        isAuthenticated: true,
+        LoaiTaiKhoan: user.LoaiTaiKhoan
       };
 
       return res.json({ success: true, message: "Đăng nhập thành công", redirect: '/' });

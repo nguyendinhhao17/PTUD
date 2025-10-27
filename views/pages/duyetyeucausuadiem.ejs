@@ -28,7 +28,7 @@
             <% requests.forEach((r,i)=>{ %>
             <tr data-id="<%= r.MaYeuCau %>">
               <td><%= i+1 %></td>
-              <td class="ma-yeu-cau"><%= r.MaYeuCau %></td>
+              <td><%= r.MaYeuCau %></td>
               <td><%= r.MaHocSinh %></td>
               <td><%= r.TenHocSinh %></td>
               <td><%= r.TenMonHoc %></td>
@@ -66,11 +66,6 @@
     </section>
   </main>
 
-  <footer>
-    <p>&copy; 2025 Hệ thống quản lý điểm</p>
-  </footer>
-
-  <!-- JS luôn đặt cuối body -->
   <script src="/js/DuyetYeuCauSuaDiem.js"></script>
 </body>
 </html>
