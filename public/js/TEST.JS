@@ -126,12 +126,10 @@ async function fetchRequestDetails(id){
     }
 
     approveBtn && approveBtn.addEventListener('click', async () => {
-      if(!confirm('Bạn có chắc muốn duyệt yêu cầu này?')) return;
       await doApproveReject(id, 'approve', true);
     });
 
     rejectBtn && rejectBtn.addEventListener('click', async () => {
-      if(!confirm('Bạn có chắc muốn từ chối yêu cầu này?')) return;
       await doApproveReject(id, 'reject', true);
     });
 
@@ -145,6 +143,33 @@ async function fetchRequestDetails(id){
   }
 }
 
+function showConfirmationModal(title, message) {
+  return new Promise((resolve) => {
+    const modal = document.querySelector('.confirmation-modal');
+    const titleEl = modal.querySelector('#confirm-title');
+    const messageEl = modal.querySelector('#confirm-message');
+    const yesBtn = modal.querySelector('#confirm-yes');
+    const noBtn = modal.querySelector('#confirm-no');
+
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    modal.style.display = 'block';
+
+    const handleResponse = (result) => {
+      modal.style.display = 'none';
+      yesBtn.removeEventListener('click', handleYes);
+      noBtn.removeEventListener('click', handleNo);
+      resolve(result);
+    };
+
+    const handleYes = () => handleResponse(true);
+    const handleNo = () => handleResponse(false);
+
+    yesBtn.addEventListener('click', handleYes);
+    noBtn.addEventListener('click', handleNo);
+  });
+}
+
 async function doApproveReject(id, action, isFromModal = false){
   // action = 'approve' or 'reject'
   const endpoint = `/api/duyetyeucausuadiem/${action}`;
@@ -155,6 +180,15 @@ async function doApproveReject(id, action, isFromModal = false){
     ...Array.from(tr?.querySelectorAll('button') || []),
     ...Array.from(modalContent?.querySelectorAll('button') || [])
   ];
+  
+  // Show confirmation modal
+  const title = action === 'approve' ? 'Xác nhận duyệt' : 'Xác nhận từ chối';
+  const message = action === 'approve' 
+    ? 'Bạn có chắc muốn duyệt yêu cầu này?' 
+    : 'Bạn có chắc muốn từ chối yêu cầu này?';
+  
+  const confirmed = await showConfirmationModal(title, message);
+  if (!confirmed) return;
   
   // Disable all related buttons during processing
   allButtons.forEach(b => b.disabled = true);
@@ -179,20 +213,64 @@ async function doApproveReject(id, action, isFromModal = false){
     const newStatus = action === 'approve' ? 'Đã duyệt' : 'Đã từ chối';
     updateRowStatus(tr, newStatus);
 
-    // Show success message
+    // Show success message and refresh table
     const successMsg = data.message || `Đã ${action === 'approve' ? 'duyệt' : 'từ chối'} yêu cầu thành công`;
     
+    // Refresh the table data
+    const refreshTable = async () => {
+      try {
+        const response = await fetch('/api/duyetyeucausuadiem/pending');
+        if (!response.ok) throw new Error('Không thể tải lại dữ liệu');
+        const data = await response.json();
+        
+        // Update table content
+        if (data.success) {
+          const tbody = table.querySelector('tbody');
+          tbody.innerHTML = data.requests.map(req => `
+            <tr data-id="${req.MaYeuCau}">
+              <td>${req.MaYeuCau}</td>
+              <td>${req.MaHocSinh}</td>
+              <td>${req.TenHocSinh}</td>
+              <td>${req.TenLop || '—'}</td>
+              <td>${req.TenMonHoc}</td>
+              <td>${req.LoaiDiem}</td>
+              <td>${req.DiemCu}</td>
+              <td>${req.DiemMoi}</td>
+              <td>${req.TenGiaoVien}</td>
+              <td>${req.LyDo}</td>
+              <td data-status="${req.TrangThai}">${req.TrangThai}</td>
+              <td>
+                ${req.TrangThai === 'Đang xử lý' ? `
+                  <button class="view-btn">Xem chi tiết</button>
+                  <button class="approve-btn">Duyệt</button>
+                  <button class="reject-btn">Từ chối</button>
+                ` : '<em>Đã xử lý</em>'}
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải lại dữ liệu:', error);
+      }
+    };
+
     if(isFromModal) {
-      // If action was from modal, show success in modal then close it
+      // If action was from modal, show success in modal
       modalContent.innerHTML = renderAlert(successMsg, 'success');
-      setTimeout(() => { if(modal) modal.style.display = 'none'; }, 800);
+      setTimeout(() => {
+        if(modal) modal.style.display = 'none';
+        refreshTable(); // Only refresh table, not entire page
+      }, 800);
     } else {
       // If action was from table buttons, show floating alert
       const alert = document.createElement('div');
       alert.className = 'floating-alert success';
       alert.textContent = successMsg;
       document.body.appendChild(alert);
-      setTimeout(() => alert.remove(), 3000);
+      setTimeout(() => {
+        alert.remove();
+        refreshTable(); // Only refresh table, not entire page
+      }, 1000);
     }
     
   } catch(err) {
@@ -226,15 +304,37 @@ if(modal && table){
       await fetchRequestDetails(id);
     }
 
-    // approve/reject buttons that may live in the row (delegated)
+    // Xử lý nút duyệt trong bảng
     if(e.target.classList.contains('approve-btn')){
-      if(!confirm('Bạn có chắc muốn duyệt yêu cầu này?')) return;
       await doApproveReject(id, 'approve', false);
     }
 
+    // Xử lý nút từ chối trong bảng
     if(e.target.classList.contains('reject-btn')){
-      if(!confirm('Bạn có chắc muốn từ chối yêu cầu này?')) return;
-      await doApproveReject(id, 'reject', false);
+      const { value: ghiChu } = await Swal.fire({
+        title: 'Lý do từ chối',
+        input: 'textarea',
+        inputPlaceholder: 'Nhập lý do từ chối yêu cầu...',
+        showCancelButton: true,
+        cancelButtonText: 'Hủy',
+        confirmButtonText: 'Từ chối yêu cầu',
+        inputValidator: (value) => {
+          if (!value) {
+            return 'Vui lòng nhập lý do từ chối!';
+          }
+        }
+      });
+
+      if (ghiChu) {
+        await doApproveReject(id, 'reject', false, ghiChu);
+      }
+    }
+
+    // Xử lý click vào các link lịch sử
+    if(e.target.closest('.dropdown-content a')) {
+      e.preventDefault();
+      const status = e.target.dataset.status;
+      loadProcessedRequests(status);
     }
   });
 

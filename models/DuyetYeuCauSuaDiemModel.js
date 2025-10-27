@@ -7,14 +7,14 @@ class DuyetYeuCauSuaDiemModel {
     try {
       await connection.beginTransaction();
 
-      // 1. Lấy thông tin yêu cầu
+      // 1. Lấy thông tin yêu cầu và kiểm tra trạng thái
       const [requests] = await connection.execute(
-        `SELECT * FROM YeuCauSuaDiem WHERE MaYeuCau = ?`,
+        `SELECT * FROM YeuCauSuaDiem WHERE MaYeuCau = ? AND TrangThai = 'DangXuLy'`,
         [maYeuCau]
       );
       
       if (requests.length === 0) {
-        throw new Error('Không tìm thấy yêu cầu');
+        throw new Error('Không tìm thấy yêu cầu hoặc yêu cầu không ở trạng thái đang xử lý');
       }
 
       const request = requests[0];
@@ -42,9 +42,8 @@ class DuyetYeuCauSuaDiemModel {
       // 3. Cập nhật trạng thái yêu cầu
       await connection.execute(
         `UPDATE YeuCauSuaDiem 
-         SET TrangThai = 'Đã duyệt',
-             MaHieuTruong = ?,
-             NgayDuyet = NOW()
+         SET TrangThai = 'DaDuyet',
+             MaHieuTruong = ?
          WHERE MaYeuCau = ?`,
         [maHieuTruong, maYeuCau]
       );
@@ -53,7 +52,7 @@ class DuyetYeuCauSuaDiemModel {
       return {
         success: true,
         message: 'Đã duyệt yêu cầu thành công',
-        data: { newStatus: 'Đã duyệt' }
+        data: { newStatus: 'DaDuyet' }
       };
 
     } catch (error) {
@@ -69,27 +68,111 @@ class DuyetYeuCauSuaDiemModel {
   }
 
   // Từ chối yêu cầu
-  static async rejectRequest(maYeuCau, maHieuTruong) {
+  static async rejectRequest(maYeuCau, ghiChu, maHieuTruong) {
     const connection = await db.getConnection();
     try {
       await connection.beginTransaction();
 
-      // Cập nhật trạng thái yêu cầu thành "Đã từ chối"
+      // Kiểm tra yêu cầu có tồn tại và đang ở trạng thái chờ xử lý không
+      const [requests] = await connection.execute(
+        `SELECT * FROM YeuCauSuaDiem WHERE MaYeuCau = ? AND TrangThai = 'DangXuLy'`,
+        [maYeuCau]
+      );
+
+      if (requests.length === 0) {
+        throw new Error('Không tìm thấy yêu cầu hoặc yêu cầu đã được xử lý');
+      }
+
+      // Cập nhật trạng thái và ghi chú
       await connection.execute(
         `UPDATE YeuCauSuaDiem 
-         SET TrangThai = 'Đã từ chối',
-             MaHieuTruong = ?,
-             NgayDuyet = NOW()
+         SET TrangThai = 'BiTuChoi',
+             GhiChu = ?,
+             MaHieuTruong = ?
          WHERE MaYeuCau = ?`,
-        [maHieuTruong, maYeuCau]
+        [ghiChu, maHieuTruong, maYeuCau]
       );
 
       await connection.commit();
       return {
         success: true,
-        message: 'Đã từ chối yêu cầu',
-        data: { newStatus: 'Đã từ chối' }
+        message: 'Đã từ chối yêu cầu thành công',
+        data: { newStatus: 'BiTuChoi' }
       };
+
+    } catch (error) {
+      await connection.rollback();
+      console.error('Lỗi khi từ chối yêu cầu:', error);
+      throw error;
+    } finally {
+      connection.release();
+    }
+  }
+
+  // Lấy danh sách yêu cầu theo trạng thái
+  static async getRequestsByStatus(status) {
+    try {
+      console.log('Model - Lọc theo trạng thái:', status);
+
+      // Chuyển đổi trạng thái từ frontend sang giá trị trong database
+      let dbStatus;
+      switch(status) {
+        case 'pending':
+          dbStatus = 'DangXuLy';
+          break;
+        case 'daduyet':
+          dbStatus = 'DaDuyet';
+          break;
+        case 'bituchoi':
+          dbStatus = 'BiTuChoi';
+          break;
+        default:
+          dbStatus = status;
+      }
+
+      console.log('Trạng thái tìm kiếm trong DB:', dbStatus);
+
+      let query = `
+        SELECT 
+          yc.MaYeuCau,
+          hs.MaHocSinh,
+          hs.TenHocSinh,
+          l.TenLop,
+          yc.Mon as TenMonHoc,
+          yc.LoaiDiem,
+          yc.DiemCu,
+          yc.DiemMoi,
+          yc.LyDo,
+          gv.TenGiaoVien,
+          yc.TrangThai,
+          yc.GhiChu
+        FROM YeuCauSuaDiem yc
+        JOIN HocSinh hs ON yc.MaHocSinh = hs.MaHocSinh
+        LEFT JOIN Lop l ON hs.MaLop = l.MaLop
+        LEFT JOIN GiaoVien gv ON yc.MaGiaoVien = gv.MaGiaoVien
+      `;
+
+      // Thêm điều kiện lọc theo trạng thái
+      if (dbStatus) {
+        query += ' WHERE yc.TrangThai = ?';
+      }
+
+      query += ' ORDER BY yc.MaYeuCau DESC';
+
+      const [rows] = dbStatus ? 
+        await db.execute(query, [dbStatus]) : 
+        await db.execute(query);
+
+      return rows;
+    } catch (error) {
+      console.error('Lỗi khi lấy danh sách yêu cầu:', error);
+      throw new Error('Không thể lấy danh sách yêu cầu');
+    }
+  }
+
+  // Lấy danh sách yêu cầu đang xử lý
+  static async getPendingRequests() {
+    try {
 
     } catch (error) {
       await connection.rollback();
@@ -103,7 +186,7 @@ class DuyetYeuCauSuaDiemModel {
     }
   }
 
-  // Lấy danh sách yêu cầu đang xử lý, hiển thị năm học, học kỳ từ bảng YC
+  // Lấy danh sách yêu cầu DangXuLy, hiển thị năm học, học kỳ từ bảng YC
   static async getPendingRequests() {
     const [rows] = await db.execute(
       `SELECT 
@@ -130,7 +213,7 @@ class DuyetYeuCauSuaDiemModel {
          AND d.TenMonHoc = yc.Mon
          AND d.NamHoc = yc.NamHoc
          AND d.HocKi = yc.HocKi
-       WHERE yc.TrangThai = 'Đang xử lý'`
+       WHERE yc.TrangThai = 'DangXuLy'`
     );
     return rows;
   }
@@ -181,7 +264,7 @@ WHERE yc.MaYeuCau = ?
       await conn.beginTransaction();
       
       const [rows] = await conn.execute(
-        `SELECT * FROM YeuCauSuaDiem WHERE MaYeuCau = ? AND TrangThai = 'Đang xử lý'`,
+        `SELECT * FROM YeuCauSuaDiem WHERE MaYeuCau = ? AND TrangThai = 'DangXuLy'`,
         [maYeuCau]
       );
       if (!rows.length) throw new Error('Yêu cầu không tồn tại hoặc đã được xử lý');
@@ -189,6 +272,7 @@ WHERE yc.MaYeuCau = ?
       const yc = rows[0];
 
       const columnMap = {
+
         'ThuongXuyen1': 'ThuongXuyen1',
         'ThuongXuyen2': 'ThuongXuyen2',
         'ThuongXuyen3': 'ThuongXuyen3',
@@ -236,7 +320,7 @@ WHERE yc.MaYeuCau = ?
       await conn.beginTransaction();
 
       const [rows] = await conn.execute(
-        `SELECT * FROM YeuCauSuaDiem WHERE MaYeuCau = ? AND TrangThai = 'Đang xử lý'`,
+        `SELECT * FROM YeuCauSuaDiem WHERE MaYeuCau = ? AND TrangThai = 'DangXuLy'`,
         [maYeuCau]
       );
       if (!rows.length) throw new Error('Yêu cầu không tồn tại hoặc đã được xử lý');
@@ -256,6 +340,34 @@ WHERE yc.MaYeuCau = ?
       return { success: false, message: err.message || 'Lỗi khi từ chối yêu cầu', error: err };
     } finally {
       if (conn) conn.release();
+    }
+  }
+
+  // Lấy thông tin ghi chú và lịch sử của yêu cầu
+  static async getRequestNotes(maYeuCau) {
+    try {
+      const [rows] = await db.execute(
+        `SELECT 
+          yc.MaYeuCau,
+          yc.TrangThai,
+          yc.GhiChu,
+          ht.TenHieuTruong
+        FROM YeuCauSuaDiem yc
+        LEFT JOIN HieuTruong ht ON yc.MaHieuTruong = ht.MaHieuTruong
+        WHERE yc.MaYeuCau = ?`,
+        [maYeuCau]
+      );
+
+      return {
+        success: true,
+        data: rows[0] || null
+      };
+    } catch (error) {
+      console.error('Lỗi khi lấy lịch sử ghi chú:', error);
+      return {
+        success: false,
+        message: 'Không thể lấy thông tin ghi chú'
+      };
     }
   }
 }
