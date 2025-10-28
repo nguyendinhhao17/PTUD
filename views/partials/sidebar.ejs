@@ -1,19 +1,16 @@
 <aside class="sidebar">
   <ul class="sidebar-nav">
     <% if(user) { %>
-      
       <% if(user.role === 'Hiệu trưởng') { %>
         <li><a href="#" data-page="phanconggiaovien">Phân công giáo viên</a></li>
         <li><a href="#" data-page="duyetyeucausuadiem">Duyệt yêu cầu sửa điểm</a></li>
         <li><a href="#" data-page="xemthongkeketqua">Xem thống kê</a></li>
-
       <% } else if(user.role === 'Giáo vụ') { %>
         <li><a href="#" data-page="quanlylop">Quản lý lớp học</a></li>
         <li><a href="#" data-page="quanlygiaovien_hocsinh">Quản lý hồ sơ học sinh, giáo viên</a></li>
         <li><a href="#" data-page="phandachocsinh">Phân chia học sinh</a></li>
         <li><a href="#" data-page="thoikhoabieu">Lập thời khóa biểu</a></li>
         <li><a href="#" data-page="xemthongkeketqua">Xem thống kê</a></li>
-
       <% } else if(user.role === 'Giáo viên') { %>
         <li><a href="#" data-page="quanlydiem">Quản lý điểm môn học</a></li>
         <li><a href="#" data-page="xetdiemrenluyen">Xét hạnh kiểm, học lực</a></li>
@@ -21,35 +18,28 @@
         <li><a href="#" data-page="giaobaitap">Giao bài tập</a></li>
         <li><a href="#" data-page="nhanxet">Nhận xét học sinh</a></li>
         <li><a href="#" data-page="xemthongkeketqua">Xem thống kê</a></li>
-
       <% } else if(user.role === 'Phụ huynh') { %>
         <li><a href="#" data-page="xemdiemhocky_hanhkiem">Xem điểm học kỳ, hạnh kiểm</a></li>
         <li><a href="#" data-page="xinphepnghihoc">Xin phép nghỉ học</a></li>
         <li><a href="#" data-page="thanhtoanhocphi">Thanh toán học phí</a></li>
         <li><a href="#" data-page="xacnhanthongtin">Chỉnh sửa thông tin con</a></li>
-
       <% } else if(user.role === 'Thí sinh') { %>
         <li><a href="#" data-page="dangkytuyensinh">Đăng ký tuyển sinh</a></li>
         <li><a href="#" data-page="xemketquatuyensinh">Xem kết quả tuyển sinh</a></li>
         <li><a href="#" data-page="xacnhannhaphoc">Xác nhận nhập học</a></li>
-
       <% } else if(user.role === 'Học sinh') { %>
         <li><a href="#" data-page="xembaitap">Xem bài tập</a></li>
         <li><a href="#" data-page="xemtkb">Xem thời khóa biểu</a></li>
         <li><a href="#" data-page="xemdiem">Xem điểm</a></li>
-
       <% } else if(user.role === 'Quản trị hệ thống') { %>
         <li><a href="#" data-page="taotk">Tạo & phân quyền tài khoản</a></li>
         <li><a href="#" data-page="quanlytruong">Quản lý trường</a></li>
         <li><a href="#" data-page="quanlymonhoc">Quản lý môn học</a></li>
-
       <% } else if(user.role === 'Cán bộ SGD') { %>
         <li><a href="#" data-page="nhapchitieutuyensinh">Nhập chỉ tiêu tuyển sinh</a></li>
         <li><a href="#" data-page="nhapdiemthituyensinh">Nhập điểm thi tuyển sinh</a></li>
         <li><a href="#" data-page="phanbohocsinh">Phân bổ học sinh vào trường</a></li>
-
       <% } %>
-      
     <% } %>
   </ul>
 
@@ -58,8 +48,4 @@
   </div>
 
   <script src="/js/DangNhap.js"></script>
-<<<<<<< HEAD
 </aside>
-=======
-</aside>
->>>>>>> c8f4f0d90dd9d944a99b267666f5dc1bbe5bc1e0
