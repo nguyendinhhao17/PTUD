@@ -1,6 +1,7 @@
 const db = require('../config/database');
 
 class DuyetYeuCauSuaDiemModel {
+
   // ==============================
   // LẤY DANH SÁCH YÊU CẦU THEO TRẠNG THÁI
   // ==============================
@@ -51,72 +52,6 @@ class DuyetYeuCauSuaDiemModel {
     }
   }
 
-<<<<<<< HEAD
-  // Từ chối yêu cầu
-  static async rejectRequest(maYeuCau, maHieuTruong) {
-    const connection = await db.getConnection();
-    try {
-      await connection.beginTransaction();
-
-      // Cập nhật trạng thái yêu cầu thành "Đã từ chối"
-      await connection.execute(
-        `UPDATE YeuCauSuaDiem 
-         SET TrangThai = 'Đã từ chối',
-             MaHieuTruong = ?,
-             NgayDuyet = NOW()
-         WHERE MaYeuCau = ?`,
-        [maHieuTruong, maYeuCau]
-      );
-
-      await connection.commit();
-      return {
-        success: true,
-        message: 'Đã từ chối yêu cầu',
-        data: { newStatus: 'Đã từ chối' }
-      };
-
-    } catch (error) {
-      await connection.rollback();
-      console.error('Lỗi khi từ chối yêu cầu:', error);
-      return {
-        success: false,
-        message: error.message || 'Lỗi khi từ chối yêu cầu'
-      };
-    } finally {
-      connection.release();
-    }
-  }
-
-  // Lấy danh sách yêu cầu đang xử lý, hiển thị năm học, học kỳ từ bảng YC
-  static async getPendingRequests() {
-    const [rows] = await db.execute(
-      `SELECT 
-         yc.MaYeuCau,
-         hs.MaHocSinh,
-         hs.TenHocSinh,
-         l.TenLop AS TenLop,
-         yc.NamHoc,
-         yc.HocKi,
-         mh.TenMonHoc,
-         yc.DiemCu,
-         yc.DiemMoi,
-         yc.LoaiDiem,
-         yc.LyDo,
-         yc.TrangThai,
-         gv.TenGiaoVien
-       FROM YeuCauSuaDiem yc
-       JOIN HocSinh hs ON yc.MaHocSinh = hs.MaHocSinh
-       LEFT JOIN Lop l ON l.MaLop = hs.MaLop
-       JOIN MonHoc mh ON TRIM(yc.Mon) = TRIM(mh.TenMonHoc)
-       JOIN GiaoVien gv ON yc.MaGiaoVien = gv.MaGiaoVien
-       JOIN Diem d
-         ON d.MaHocSinh = yc.MaHocSinh
-         AND d.TenMonHoc = yc.Mon
-         AND d.NamHoc = yc.NamHoc
-         AND d.HocKi = yc.HocKi
-       WHERE yc.TrangThai = 'DangXuLy'`
-    );
-=======
   // ==============================
   // LẤY TẤT CẢ YÊU CẦU
   // ==============================
@@ -131,7 +66,40 @@ class DuyetYeuCauSuaDiemModel {
       LEFT JOIN GiaoVien gv ON yc.MaGiaoVien = gv.MaGiaoVien
       ORDER BY yc.MaYeuCau DESC
     `);
->>>>>>> aaf3ce25432e9c4ecdb4ed6f55b56dd133d2480a
+    return rows;
+  }
+
+  // ==============================
+  // LẤY DANH SÁCH YÊU CẦU ĐANG XỬ LÝ
+  // ==============================
+  static async getPendingRequests() {
+    const [rows] = await db.execute(`
+      SELECT 
+        yc.MaYeuCau,
+        hs.MaHocSinh,
+        hs.TenHocSinh,
+        l.TenLop AS TenLop,
+        yc.NamHoc,
+        yc.HocKi,
+        mh.TenMonHoc,
+        yc.DiemCu,
+        yc.DiemMoi,
+        yc.LoaiDiem,
+        yc.LyDo,
+        yc.TrangThai,
+        gv.TenGiaoVien
+      FROM YeuCauSuaDiem yc
+      JOIN HocSinh hs ON yc.MaHocSinh = hs.MaHocSinh
+      LEFT JOIN Lop l ON l.MaLop = hs.MaLop
+      JOIN MonHoc mh ON TRIM(yc.Mon) = TRIM(mh.TenMonHoc)
+      JOIN GiaoVien gv ON yc.MaGiaoVien = gv.MaGiaoVien
+      JOIN Diem d
+        ON d.MaHocSinh = yc.MaHocSinh
+        AND d.TenMonHoc = yc.Mon
+        AND d.NamHoc = yc.NamHoc
+        AND d.HocKi = yc.HocKi
+      WHERE yc.TrangThai = 'DangXuLy'
+    `);
     return rows;
   }
 
