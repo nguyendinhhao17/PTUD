@@ -130,7 +130,7 @@ class DuyetYeuCauSuaDiemModel {
          AND d.TenMonHoc = yc.Mon
          AND d.NamHoc = yc.NamHoc
          AND d.HocKi = yc.HocKi
-       WHERE yc.TrangThai = 'Đang xử lý'`
+       WHERE yc.TrangThai = 'DangXuLy'`
     );
     return rows;
   }
