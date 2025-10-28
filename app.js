@@ -11,12 +11,8 @@ global.db = require('./config/database');
 const DangNhapRoutes = require('./routes/DangNhapRouters');
 const ThoiKhoaBieuRoutes = require('./routes/ThoiKhoaBieuRoutes');
 const DuyetRoutes = require('./routes/DuyetYeuCauSuaDiemRoutes');
-<<<<<<< HEAD
 const XemThongKeKetQua = require('./routes/XemThongKeKetQuaRoutes');
-=======
 const XetDiemRenLuyenRoutes = require('./routes/XetDiemRenLuyenRoutes');
-
->>>>>>> aaf3ce25432e9c4ecdb4ed6f55b56dd133d2480a
 
 const app = express();
 
@@ -39,22 +35,19 @@ app.use(session({
 app.use('/', DangNhapRoutes);
 app.use('/api/thoikhoabieu', ThoiKhoaBieuRoutes);
 app.use('/api/duyetyeucausuadiem', DuyetRoutes);
-<<<<<<< HEAD
 app.use('/api/xemthongkeketqua', XemThongKeKetQua);
-=======
 app.use('/api/xetdiemrenluyen', XetDiemRenLuyenRoutes);
->>>>>>> aaf3ce25432e9c4ecdb4ed6f55b56dd133d2480a
 
 // TRANG CHÍNH
 app.get('/', (req, res) => {
   const user = req.session.user;
-  if(!user) return res.render('index', { page:'dangnhap', user:null });
-  res.render('index', { page:'home', user });
+  if (!user) return res.render('index', { page: 'dangnhap', user: null });
+  res.render('index', { page: 'home', user });
 });
 
 // 404
-app.use((req,res)=> res.status(404).json({success:false, message:'Không tìm thấy trang.'}));
+app.use((req, res) => res.status(404).json({ success: false, message: 'Không tìm thấy trang.' }));
 
 // START SERVER
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, ()=> console.log(`Server chạy tại http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server chạy tại http://localhost:${PORT}`));
