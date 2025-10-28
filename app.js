@@ -11,7 +11,12 @@ global.db = require('./config/database');
 const DangNhapRoutes = require('./routes/DangNhapRouters');
 const ThoiKhoaBieuRoutes = require('./routes/ThoiKhoaBieuRoutes');
 const DuyetRoutes = require('./routes/DuyetYeuCauSuaDiemRoutes');
+<<<<<<< HEAD
 const XemThongKeKetQua = require('./routes/XemThongKeKetQuaRoutes');
+=======
+const XetDiemRenLuyenRoutes = require('./routes/XetDiemRenLuyenRoutes');
+
+>>>>>>> aaf3ce25432e9c4ecdb4ed6f55b56dd133d2480a
 
 const app = express();
 
@@ -34,7 +39,11 @@ app.use(session({
 app.use('/', DangNhapRoutes);
 app.use('/api/thoikhoabieu', ThoiKhoaBieuRoutes);
 app.use('/api/duyetyeucausuadiem', DuyetRoutes);
+<<<<<<< HEAD
 app.use('/api/xemthongkeketqua', XemThongKeKetQua);
+=======
+app.use('/api/xetdiemrenluyen', XetDiemRenLuyenRoutes);
+>>>>>>> aaf3ce25432e9c4ecdb4ed6f55b56dd133d2480a
 
 // TRANG CHÍNH
 app.get('/', (req, res) => {
