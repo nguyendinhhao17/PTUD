@@ -1,126 +1,53 @@
-
 <link rel="stylesheet" href="/css/DuyetYeuCauSuaDiem.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <header>
-    <h1><%= title %></h1>
-  </header>
 
-  <main>
-    <section class="approve-section">
-      <div class="section-header">
-        <p>Xem xét và phê duyệt các yêu cầu sửa điểm từ giáo viên</p>
-        <div class="filter-buttons">
-          <button class="filter-btn active" data-status="Đang xử lý">Đang xử lý</button>
-          <button class="filter-btn" data-status="Đã duyệt">Đã duyệt</button>
-          <button class="filter-btn" data-status="Bị từ chối">Bị từ chối</button>
-        </div>
+<header>
+  <h1><%= title %></h1>
+</header>
+
+<main>
+  <section class="approve-section">
+    <div class="section-header">
+      <p>Xem xét và phê duyệt các yêu cầu sửa điểm từ giáo viên</p>
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-status="All">Tất cả</button>
+        <button class="filter-btn" data-status="DangXuLy">Đang xử lý</button>
+        <button class="filter-btn" data-status="DaDuyet">Đã duyệt</button>
+        <button class="filter-btn" data-status="BiTuChoi">Bị từ chối</button>
       </div>
+    </div>
 
-      <style>
-        .filter-buttons {
-          margin: 10px 0;
-        }
-        .filter-btn {
-          padding: 8px 15px;
-          margin-right: 10px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          cursor: pointer;
-          background: white;
-        }
-        .filter-btn.active {
-          background: #4CAF50;
-          color: white;
-          border-color: #4CAF50;
-        }
-        .filter-btn:hover {
-          opacity: 0.8;
-        }
-        .text-center {
-          text-align: center;
-        }
-        .text-danger {
-          color: #dc3545;
-        }
-        tbody tr td.text-center {
-          padding: 20px;
-          font-style: italic;
-        }
-      </style>
+    <table id="requests-table">
+      <thead>
+        <tr>
+          <th>STT</th>
+          <th>Mã yêu cầu</th>
+          <th>Mã học sinh</th>
+          <th>Tên học sinh</th>
+          <th>Môn học</th>
+          <th>Loại điểm</th>
+          <th>Điểm cũ</th>
+          <th>Điểm mới</th>
+          <th>Lý do</th>
+          <th>Giáo viên gửi</th>
+          <th>Trạng thái</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="12" style="text-align:center;">Đang tải...</td></tr>
+      </tbody>
+    </table>
 
-      <table id="requests-table">
-        <thead>
-          <tr>
-            <th>STT</th>
-            <th>Mã yêu cầu</th>
-            <th>Mã học sinh</th>
-            <th>Tên học sinh</th>
-            <th>Môn học</th>
-            <th>Loại điểm</th>
-            <th>Điểm cũ</th>
-            <th>Điểm mới</th>
-            <th>Lý do</th>
-            <th>Giáo viên gửi</th>
-            <th>Trạng thái</th>
-            <th>Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if(requests.length){ %>
-            <% requests.forEach((r,i)=>{ %>
-            <tr data-id="<%= r.MaYeuCau %>">
-              <td><%= i+1 %></td>
-              <td><%= r.MaYeuCau %></td>
-              <td><%= r.MaHocSinh %></td>
-              <td><%= r.TenHocSinh %></td>
-              <td><%= r.TenMonHoc %></td>
-              <td><%= r.LoaiDiem %></td>
-              <td class="text-red"><%= r.DiemCu %></td>
-              <td class="text-green"><%= r.DiemMoi %></td>
-              <td><%= r.LyDo %></td>
-              <td><%= r.TenGiaoVien %></td>
-              <td>
-                <% if (r.TrangThai === 'DangXuLy') { %>
-                  Đang xử lý
-                <% } else if (r.TrangThai === 'DaDuyet') { %>
-                  Đã duyệt
-                <% } else if (r.TrangThai === 'BiTuChoi') { %>
-                  Bị từ chối
-                <% } %>
-              </td>
-              <!-- <td><%= r.NgayDuyet ? new Date(r.NgayDuyet).toLocaleDateString('vi-VN') : '—' %></td> -->
-              <td>
-                <% if(r.TrangThai==='DangXuLy'){ %>
-                  <button class="view-btn">Xem chi tiết</button>
-                  <button class="approve-btn">✅ Duyệt</button>
-                  <button class="reject-btn">❌ Từ chối</button>
-                <% } else { %>
-                  <button class="view-btn">Xem chi tiết</button>
-                  <% if(r.TrangThai==='BiTuChoi' && r.GhiChu){ %>
-                    <button class="note-btn" title="<%= r.GhiChu %>">👁️ Lý do từ chối</button>
-                  <% } %>
-                  <% if(r.TrangThai==='DaDuyet'){ %>
-                    <em class="status-done">✔️ Đã duyệt</em>
-                  <% } %>
-                <% } %>
-              </td>
-            </tr>
-            <% }) %>
-          <% } else { %>
-            <tr><td colspan="12" style="text-align:center;">Không có yêu cầu</td></tr>
-          <% } %>
-        </tbody>
-      </table>
-
-      <!-- Modal -->
-      <div id="detail-modal" class="modal">
-        <div class="modal-content">
-          <span class="close">&times;</span>
-          <h3>Chi tiết yêu cầu</h3>
-          <div id="detail-content"></div>
-        </div>
+    <!-- Modal chi tiết -->
+    <div id="detail-modal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Chi tiết yêu cầu</h3>
+        <div id="detail-content"></div>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
+</main>
 
-  <script src="/js/DuyetYeuCauSuaDiem.js"></script>
+<script src="/js/DuyetYeuCauSuaDiem.js"></script>
