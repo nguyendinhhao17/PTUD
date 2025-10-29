@@ -12,6 +12,7 @@ const DangNhapRoutes = require('./routes/DangNhapRouters');
 const ThoiKhoaBieuRoutes = require('./routes/ThoiKhoaBieuRoutes');
 const DuyetRoutes = require('./routes/DuyetYeuCauSuaDiemRoutes');
 const XetDiemRenLuyenRoutes = require('./routes/XetDiemRenLuyenRoutes');
+const ThanhToanHocPhiRoutes = require('./routes/ThanhToanHocPhiRoutes');
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/', DangNhapRoutes);
 app.use('/api/thoikhoabieu', ThoiKhoaBieuRoutes);
 app.use('/api/duyetyeucausuadiem', DuyetRoutes);
 app.use('/api/xetdiemrenluyen', XetDiemRenLuyenRoutes);
+app.use('/thanhtoan', ThanhToanHocPhiRoutes);
 
 // TRANG CHÍNH
 app.get('/', (req, res) => {

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán học phí</title>
+    <link rel="stylesheet" href="/css/globals.css">
+    <link rel="stylesheet" href="/css/ThanhToanHocPhi.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <div class="main-container">
+        <%- include('../partials/sidebar') %>
+
+        <div class="content">
+            <div class="breadcrumb">
+                <a href="/">Về trang chủ</a>
+            </div>
+
+            <div class="page-header">
+                <h1>Thanh toán học phí</h1>
+                <p class="subtitle">Chọn các khoản phí cần thanh toán</p>
+            </div>
+
+            <div class="payment-container">
+                <div class="section">
+                    <h2>Chọn kỳ học</h2>
+                    <div class="select-wrapper">
+                        <select id="selectHocKy">
+                            <option value="">Chọn học kỳ...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Danh sách khoản phí</h2>
+                    <div id="danhSachPhi" class="fee-list">
+                        <p class="empty-message">Vui lòng chọn học kỳ để xem danh sách học phí</p>
+                    </div>
+                </div>
+
+                <div class="section total-section">
+                    <h2>Tổng cộng</h2>
+                    <div class="total-amount">
+                        <span id="tongTien">0</span> VNĐ
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Phương thức thanh toán</h2>
+                    <div class="payment-methods">
+                        <label class="payment-method">
+                            <input type="radio" name="phuongThuc" value="Chuyển khoản ngân hàng" checked>
+                            <div class="method-content">
+                                <span class="method-icon">🏦</span>
+                                <div class="method-info">
+                                    <div class="method-title">Chuyển khoản ngân hàng</div>
+                                    <div class="method-desc">Thanh toán qua tài khoản ngân hàng</div>
+                                </div>
+                            </div>
+                        </label>
+
+                        <label class="payment-method">
+                            <input type="radio" name="phuongThuc" value="Thẻ tín dụng/ghi nợ">
+                            <div class="method-content">
+                                <span class="method-icon">💳</span>
+                                <div class="method-info">
+                                    <div class="method-title">Thẻ tín dụng/ghi nợ</div>
+                                    <div class="method-desc">Visa, Mastercard, JCB</div>
+                                </div>
+                            </div>
+                        </label>
+
+                        <label class="payment-method">
+                            <input type="radio" name="phuongThuc" value="Ví điện tử">
+                            <div class="method-content">
+                                <span class="method-icon">📱</span>
+                                <div class="method-info">
+                                    <div class="method-title">Ví điện tử</div>
+                                    <div class="method-desc">MoMo, ZaloPay, VNPay</div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Thông tin thanh toán</h2>
+                    <div id="thongTinThanhToan" class="payment-info">
+                        <p class="info-message">Vui lòng chọn học kỳ và các khoản phí để xem thông tin thanh toán</p>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="btnThanhToan" class="btn-primary" disabled>
+                        Thanh toán <span id="tongTienButton">0</span> VNĐ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+    <script src="/js/ThanhToanHocPhi.js"></script>
+</body>
+</html>
